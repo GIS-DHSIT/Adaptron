@@ -139,6 +139,7 @@ Respond with a JSON object:
                     json={
                         "model": self.config.agent_model,
                         "max_tokens": 1024,
+                        "temperature": 0,
                         "messages": [{"role": "user", "content": prompt}],
                     },
                 )

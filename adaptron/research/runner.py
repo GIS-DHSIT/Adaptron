@@ -142,6 +142,7 @@ class ExperimentRunner:
                 self._current_config = trial_config
             elif self._best_val_bpb is not None and val_bpb < self._best_val_bpb:
                 status = "improved"
+                previous_best = self._best_val_bpb
                 self._best_val_bpb = val_bpb
                 self._current_config = trial_config
                 self._emit(
@@ -149,11 +150,19 @@ class ExperimentRunner:
                     {
                         "experiment_id": proposal.experiment_id,
                         "val_bpb": val_bpb,
-                        "previous_best": self._best_val_bpb,
+                        "previous_best": previous_best,
                     },
                 )
             else:
                 status = "regressed"
+                self._emit(
+                    "experiment_reverted",
+                    {
+                        "experiment_id": proposal.experiment_id,
+                        "val_bpb": val_bpb,
+                        "best_val_bpb": self._best_val_bpb,
+                    },
+                )
 
             result = ExperimentResult(
                 experiment_id=proposal.experiment_id,

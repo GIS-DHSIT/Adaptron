@@ -64,10 +64,16 @@ class ExperimentTracker:
     def summary(self) -> dict[str, Any]:
         total = len(self._results)
         improvements = sum(1 for r in self._results if r.get("status") == "improved")
+        regressions = sum(1 for r in self._results if r.get("status") == "regressed")
+        failures = sum(1 for r in self._results if r.get("status") == "failed")
         best = self.get_best()
         best_val_bpb = float(best["val_bpb"]) if best else None
+        best_experiment_id = best["experiment_id"] if best else None
         return {
             "total_experiments": total,
             "improvements": improvements,
+            "regressions": regressions,
+            "failures": failures,
             "best_val_bpb": best_val_bpb,
+            "best_experiment_id": best_experiment_id,
         }
