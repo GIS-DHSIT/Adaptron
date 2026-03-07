@@ -21,9 +21,11 @@ def create_app() -> FastAPI:
     )
     from adaptron.api.routes.wizard import router as wizard_router
     from adaptron.api.routes.pipelines import router as pipelines_router
+    from adaptron.api.routes.playground import router as playground_router
 
     app.include_router(wizard_router)
     app.include_router(pipelines_router)
+    app.include_router(playground_router)
 
     @app.get("/api/health")
     def health():
