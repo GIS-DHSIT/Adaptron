@@ -1,4 +1,4 @@
-import asyncio
+import pytest
 from unittest.mock import MagicMock, patch
 
 from adaptron.train.cpt import CPTTrainer
@@ -12,7 +12,8 @@ def test_registered_as_trainer_cpt():
     assert plugin is CPTTrainer
 
 
-def test_cpt_train_mocked():
+@pytest.mark.asyncio
+async def test_cpt_train_mocked():
     mock_model = MagicMock()
     mock_tokenizer = MagicMock()
     mock_tokenizer.pad_token = None
@@ -53,9 +54,7 @@ def test_cpt_train_mocked():
         dataset = [
             {"text": "Some raw domain text for continued pre-training."},
         ]
-        result = asyncio.get_event_loop().run_until_complete(
-            trainer.train(config, dataset)
-        )
+        result = await trainer.train(config, dataset)
 
     assert result.training_mode == "cpt"
     assert result.model_path == "/tmp/cpt_out"

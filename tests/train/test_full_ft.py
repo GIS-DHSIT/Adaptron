@@ -1,4 +1,4 @@
-import asyncio
+import pytest
 from unittest.mock import MagicMock, patch
 
 from adaptron.train.full_ft import FullFTTrainer
@@ -12,7 +12,8 @@ def test_registered_as_trainer_full_ft():
     assert plugin is FullFTTrainer
 
 
-def test_full_ft_train_mocked():
+@pytest.mark.asyncio
+async def test_full_ft_train_mocked():
     mock_model = MagicMock()
     mock_tokenizer = MagicMock()
     mock_tokenizer.pad_token = None
@@ -28,22 +29,6 @@ def test_full_ft_train_mocked():
     mock_dataset = MagicMock()
     mock_dataset.map.return_value = mock_dataset
 
-    with (
-        patch("adaptron.train.full_ft.importlib", create=True),
-        patch.dict("sys.modules", {
-            "transformers": MagicMock(),
-            "datasets": MagicMock(),
-        }),
-        patch("adaptron.train.full_ft.AutoModelForCausalLM", create=True) as mock_auto_model,
-        patch("adaptron.train.full_ft.AutoTokenizer", create=True) as mock_auto_tok,
-        patch("adaptron.train.full_ft.Trainer", create=True) as mock_trainer_cls,
-        patch("adaptron.train.full_ft.TrainingArguments", create=True),
-        patch("adaptron.train.full_ft.Dataset", create=True) as mock_ds,
-    ):
-        # Re-import to get the patched version - instead, mock at the import level
-        pass
-
-    # Better approach: mock the lazy imports inside train()
     mock_transformers = MagicMock()
     mock_transformers.AutoModelForCausalLM.from_pretrained.return_value = mock_model
     mock_transformers.AutoTokenizer.from_pretrained.return_value = mock_tokenizer
@@ -68,9 +53,7 @@ def test_full_ft_train_mocked():
         dataset = [
             {"instruction": "Say hi", "response": "Hello!"},
         ]
-        result = asyncio.get_event_loop().run_until_complete(
-            trainer.train(config, dataset)
-        )
+        result = await trainer.train(config, dataset)
 
     assert result.training_mode == "full_ft"
     assert result.model_path == "/tmp/full_ft_out"

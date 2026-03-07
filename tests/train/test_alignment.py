@@ -1,4 +1,4 @@
-import asyncio
+import pytest
 from unittest.mock import MagicMock, patch
 
 from adaptron.train.alignment import DPOAlignmentTrainer
@@ -12,7 +12,8 @@ def test_registered_as_trainer_dpo():
     assert plugin is DPOAlignmentTrainer
 
 
-def test_dpo_train_mocked():
+@pytest.mark.asyncio
+async def test_dpo_train_mocked():
     mock_model = MagicMock()
     mock_tokenizer = MagicMock()
     mock_tokenizer.pad_token = None
@@ -58,9 +59,7 @@ def test_dpo_train_mocked():
                 "rejected": "AI is magic.",
             },
         ]
-        result = asyncio.get_event_loop().run_until_complete(
-            trainer.train(config, dataset)
-        )
+        result = await trainer.train(config, dataset)
 
     assert result.training_mode == "dpo"
     assert result.model_path == "/tmp/dpo_out"

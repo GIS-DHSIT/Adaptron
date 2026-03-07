@@ -1,4 +1,4 @@
-import asyncio
+import pytest
 from unittest.mock import MagicMock, patch
 
 from adaptron.train.distill import DistillationTrainer
@@ -12,7 +12,8 @@ def test_registered_as_trainer_distill():
     assert plugin is DistillationTrainer
 
 
-def test_distill_train_mocked():
+@pytest.mark.asyncio
+async def test_distill_train_mocked():
     mock_teacher = MagicMock()
     mock_student = MagicMock()
     mock_tokenizer = MagicMock()
@@ -72,9 +73,7 @@ def test_distill_train_mocked():
         dataset = [
             {"instruction": "Explain AI", "response": "AI is..."},
         ]
-        result = asyncio.get_event_loop().run_until_complete(
-            trainer.train(config, dataset)
-        )
+        result = await trainer.train(config, dataset)
 
     assert result.training_mode == "distill"
     assert result.model_path == "/tmp/distill_out"
