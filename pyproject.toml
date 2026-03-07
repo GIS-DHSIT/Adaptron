@@ -9,6 +9,21 @@ description = "End-to-end LLM Fine-tuning Framework"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
+authors = [
+    { name = "Muthu Subramanian G" },
+]
+keywords = ["llm", "fine-tuning", "machine-learning", "training", "nlp", "transformers"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "pydantic>=2.0",
     "pyyaml>=6.0",
@@ -69,6 +84,11 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.3",
 ]
+
+[project.urls]
+Homepage = "https://github.com/MuthuSubramanian/Adaptron"
+Repository = "https://github.com/MuthuSubramanian/Adaptron"
+"Bug Tracker" = "https://github.com/MuthuSubramanian/Adaptron/issues"
 
 [project.scripts]
 adaptron = "adaptron.cli.main:app"
