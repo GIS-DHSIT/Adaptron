@@ -19,6 +19,9 @@ export default function Home() {
         <Link href="/dashboard" className="px-6 py-3 border border-border text-gray-400 rounded-lg font-bold uppercase text-sm tracking-wider hover:border-border-active hover:text-white">
           Dashboard
         </Link>
+        <Link href="/playground" className="px-6 py-3 border border-border text-gray-400 rounded-lg font-bold uppercase text-sm tracking-wider hover:border-border-active hover:text-white">
+          Playground
+        </Link>
       </div>
     </div>
   )
