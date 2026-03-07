@@ -173,5 +173,62 @@ def playground(
         print()
 
 
+@app.command()
+def connect_list():
+    """List saved connection profiles."""
+    from adaptron.connectors.manager import ConnectionManager
+    manager = ConnectionManager()
+    profiles = manager.list_profiles()
+    if not profiles:
+        console.print("[yellow]No saved connection profiles.[/yellow]")
+        return
+    for name in profiles:
+        console.print(f"  • {name}")
+
+
+@app.command()
+def connect_test(profile: str = typer.Argument(..., help="Profile name to test")):
+    """Test a saved connection profile."""
+    import asyncio
+    from adaptron.connectors.manager import ConnectionManager
+    manager = ConnectionManager()
+    try:
+        connector = asyncio.run(manager.connect(profile))
+        console.print(f"[green]Connection to '{profile}' successful![/green]")
+        asyncio.run(connector.disconnect())
+    except Exception as e:
+        console.print(f"[red]Connection failed: {e}[/red]")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def connect_schema(profile: str = typer.Argument(..., help="Profile name")):
+    """Show discovered schema for a connection profile."""
+    import asyncio
+    from adaptron.connectors.manager import ConnectionManager
+    manager = ConnectionManager()
+    try:
+        connector = asyncio.run(manager.connect(profile))
+        schema = asyncio.run(connector.discover_schema())
+        for coll in schema.collections:
+            console.print(f"\n[bold]{coll.name}[/bold] ({coll.source_type})")
+            for field in coll.fields:
+                pk = " [PK]" if field.is_primary_key else ""
+                console.print(f"  {field.name}: {field.data_type}{pk}")
+        asyncio.run(connector.disconnect())
+    except Exception as e:
+        console.print(f"[red]Schema discovery failed: {e}[/red]")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def connect_remove(profile: str = typer.Argument(..., help="Profile name to remove")):
+    """Remove a saved connection profile."""
+    from adaptron.connectors.manager import ConnectionManager
+    manager = ConnectionManager()
+    manager.remove_profile(profile)
+    console.print(f"[green]Profile '{profile}' removed.[/green]")
+
+
 if __name__ == "__main__":
     app()

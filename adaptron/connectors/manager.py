@@ -1,6 +1,7 @@
 """Connection manager with YAML-based profile storage."""
 from __future__ import annotations
 
+import os
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -15,8 +16,26 @@ class ConnectionManager:
 
     def __init__(self, profiles_path: Path | None = None) -> None:
         if profiles_path is None:
-            profiles_path = Path.home() / ".adaptron" / "connections.yaml"
+            env_path = os.environ.get("ADAPTRON_CONNECTIONS_FILE")
+            if env_path:
+                profiles_path = Path(env_path)
+            else:
+                profiles_path = Path.home() / ".adaptron" / "connections.yaml"
         self._path = profiles_path
+
+    async def connect(self, profile_name: str) -> Any:
+        """Load a profile and connect using the appropriate connector."""
+        config = self.load_profile(profile_name)
+        return await self.connect_with_config(config)
+
+    async def connect_with_config(self, config: ConnectorConfig) -> Any:
+        """Create and connect a connector from a ConnectorConfig directly."""
+        from adaptron.core.registry import global_registry
+
+        connector_cls = global_registry.get("connector", config.connector_type)
+        connector = connector_cls()
+        await connector.connect(config)
+        return connector
 
     def _read_profiles(self) -> dict[str, Any]:
         if not self._path.exists():
