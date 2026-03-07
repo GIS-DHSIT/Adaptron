@@ -252,5 +252,68 @@ def schedule_run(schedule_id: str = typer.Argument(..., help="Schedule ID to run
     console.print("[yellow]Schedule execution requires active database connections.[/yellow]")
 
 
+@app.command()
+def research(
+    config: Path = typer.Option("adaptron.yaml", help="Path to config file"),
+    time_budget: int = typer.Option(300, help="Seconds per experiment"),
+    max_experiments: int = typer.Option(50, help="Max number of experiments"),
+    trainer: str = typer.Option("qlora", help="Trainer plugin to use"),
+    mode: str = typer.Option("config", help="Mode: config or hybrid"),
+    strategy: str = typer.Option("explore_exploit", help="Search strategy"),
+    output_dir: Path = typer.Option("output", help="Output directory"),
+):
+    """Run autonomous research experiments to optimize training."""
+    import asyncio
+    from adaptron.core.config import PipelineConfig
+    from adaptron.research.config import ResearchConfig
+    from adaptron.research.runner import ExperimentRunner
+    from adaptron.train.models import TrainConfig
+
+    if not config.exists():
+        console.print(f"[red]Config file not found: {config}[/red]")
+        raise typer.Exit(code=1)
+
+    pipeline_config = PipelineConfig.from_yaml(config)
+    train_config = TrainConfig(
+        base_model=pipeline_config.base_model,
+        output_dir=str(output_dir),
+        training_mode=trainer,
+        epochs=pipeline_config.epochs,
+        learning_rate=pipeline_config.learning_rate,
+        batch_size=pipeline_config.batch_size,
+        lora_rank=pipeline_config.lora_rank,
+        max_seq_length=pipeline_config.max_seq_length,
+    )
+
+    research_config = ResearchConfig(
+        base_config=train_config,
+        time_budget=time_budget,
+        max_experiments=max_experiments,
+        mode=mode,
+        strategy=strategy,
+        trainer_plugin=trainer,
+    )
+
+    console.print(f"[blue]Starting autonomous research[/blue]")
+    console.print(f"  Base model: {train_config.base_model}")
+    console.print(f"  Trainer: {trainer}")
+    console.print(f"  Time budget: {time_budget}s per experiment")
+    console.print(f"  Max experiments: {max_experiments}")
+    console.print(f"  Strategy: {strategy}")
+
+    runner = ExperimentRunner(config=research_config, output_dir=output_dir)
+
+    try:
+        asyncio.run(runner.run())
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Research stopped by user.[/yellow]")
+
+    summary = runner.tracker.summary()
+    console.print(f"\n[green]Research complete![/green]")
+    console.print(f"  Total experiments: {summary['total_experiments']}")
+    console.print(f"  Improvements: {summary['improvements']}")
+    console.print(f"  Best val_bpb: {summary['best_val_bpb']}")
+
+
 if __name__ == "__main__":
     app()
