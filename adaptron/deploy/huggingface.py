@@ -46,7 +46,7 @@ class HuggingFaceDeployer(BaseDeployer):
                 f"Failed to upload model to HuggingFace Hub. "
                 f"Ensure you are authenticated (huggingface-cli login). "
                 f"Error: {e}"
-            )
+            ) from e
 
         url = f"https://huggingface.co/{repo_id}"
         return DeploymentArtifact(
