@@ -59,6 +59,28 @@ class UnderstandStage:
         return StageResult(status=StageStatus.COMPLETED, output={"chunk_count": len(all_chunks), "entity_count": len(all_entities), "quality_score": quality.overall})
 
 
+class CleanStage:
+    """Clean stage that filters and normalizes ingested documents."""
+    name = "clean"
+
+    def __init__(self, config: PipelineConfig):
+        self.config = config
+
+    async def run(self, context: dict) -> StageResult:
+        from adaptron.connectors.cleaner import DataCleaner, CleanConfig
+
+        documents = context.get("documents", [])
+        if not documents:
+            return StageResult(status=StageStatus.COMPLETED, output={"cleaned_count": 0})
+        cleaner = DataCleaner()
+        result = cleaner.clean(documents, CleanConfig())
+        context["documents"] = result.cleaned
+        return StageResult(
+            status=StageStatus.COMPLETED,
+            output={"cleaned_count": len(result.cleaned), "removed": result.removed_count},
+        )
+
+
 class SynthesizeStage:
     """Synthesize stage that generates training data from chunks."""
     name = "synthesize"
@@ -67,10 +89,13 @@ class SynthesizeStage:
         self.config = config
 
     async def run(self, context: dict) -> StageResult:
-        from adaptron.synthesize.instruction import TemplateInstructionGenerator
-
         chunks = context.get("chunks", [])
-        generator = TemplateInstructionGenerator()
+        try:
+            from adaptron.synthesize.auto import AutoSynthesizer
+            generator = AutoSynthesizer()
+        except ImportError:
+            from adaptron.synthesize.instruction import TemplateInstructionGenerator
+            generator = TemplateInstructionGenerator()
         dataset = generator.generate(chunks)
         context["dataset"] = dataset
         return StageResult(status=StageStatus.COMPLETED, output={"dataset_size": len(dataset)})
@@ -86,6 +111,7 @@ class PipelineFactory:
 
         pipeline.add_stage("ingest", IngestStage(config))
         pipeline.add_stage("understand", UnderstandStage(config))
+        pipeline.add_stage("clean", CleanStage(config))
         pipeline.add_stage("synthesize", SynthesizeStage(config))
 
         return pipeline

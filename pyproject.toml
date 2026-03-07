@@ -50,7 +50,19 @@ api = [
 deploy = [
     "huggingface-hub>=0.22",
 ]
-all = ["adaptron[train,ingest,understand,rag,api,deploy]"]
+connectors = [
+    "pymongo>=4.6",
+    "redis>=5.0",
+    "elasticsearch>=8.12",
+    "boto3>=1.34",
+    "cassandra-driver>=3.29",
+    "google-cloud-bigquery>=3.17",
+    "snowflake-connector-python>=3.7",
+    "confluent-kafka>=2.3",
+    "httpx>=0.27",
+    "apscheduler>=3.10",
+]
+all = ["adaptron[train,ingest,understand,rag,api,deploy,connectors]"]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
