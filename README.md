@@ -137,13 +137,17 @@ Every pipeline component is a plugin. Register your own with the `@register_plug
 
 ```python
 from adaptron.core.registry import register_plugin
-from adaptron.ingest.base import BaseIngester, IngesterResult
+from adaptron.ingest.base import BaseIngester
+from adaptron.ingest.models import DataSource, RawDocument
 
-@register_plugin("ingest", "my_custom")
+@register_plugin("ingester", "my_custom")
 class MyCustomIngester(BaseIngester):
-    async def ingest(self, source: str, **kwargs) -> IngesterResult:
+    def ingest(self, source: DataSource) -> list[RawDocument]:
         # Your custom ingestion logic
         ...
+
+    def supported_types(self) -> list[str]:
+        return ["my_custom"]
 ```
 
 Retrieve plugins at runtime:
