@@ -81,5 +81,97 @@ def wizard():
     console.print("[yellow]Interactive wizard coming soon. Use the web UI for now.[/yellow]")
 
 
+@app.command()
+def playground(
+    model: str = typer.Option("", help="Model name to chat with"),
+    rag: bool = typer.Option(False, help="Enable RAG context augmentation"),
+    temperature: float = typer.Option(0.7, help="Sampling temperature"),
+    max_tokens: int = typer.Option(2048, help="Maximum response tokens"),
+):
+    """Interactive chat with a finetuned model via Ollama."""
+    import asyncio
+    from adaptron.playground.engine import PlaygroundEngine, ChatMessage
+
+    engine = PlaygroundEngine()
+
+    # List models if none specified
+    if not model:
+        try:
+            models = asyncio.run(engine.list_models())
+            if not models:
+                console.print("[red]No models found in Ollama.[/red]")
+                raise typer.Exit(code=1)
+            console.print("[blue]Available models:[/blue]")
+            for i, m in enumerate(models):
+                name = m.get("name", "unknown")
+                prefix = "[green]*[/green] " if name.startswith("adaptron-") else "  "
+                console.print(f"  {prefix}{i + 1}. {name}")
+
+            choice = input("\nSelect model number (or type name): ").strip()
+            try:
+                idx = int(choice) - 1
+                model = models[idx].get("name", "")
+            except (ValueError, IndexError):
+                model = choice
+        except Exception as e:
+            console.print(f"[red]Cannot connect to Ollama: {e}[/red]")
+            console.print("Make sure Ollama is running: ollama serve")
+            raise typer.Exit(code=1)
+
+    console.print(f"\n[green]Chatting with:[/green] {model}")
+    console.print(f"[dim]Temperature: {temperature} | Max tokens: {max_tokens} | RAG: {'ON' if rag else 'OFF'}[/dim]")
+    console.print("[dim]Type 'quit' or 'exit' to stop. Type 'clear' to reset history.[/dim]\n")
+
+    history: list[ChatMessage] = []
+
+    while True:
+        try:
+            user_input = input("You: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            console.print("\n[dim]Goodbye![/dim]")
+            break
+
+        if not user_input:
+            continue
+        if user_input.lower() in ("quit", "exit"):
+            console.print("[dim]Goodbye![/dim]")
+            break
+        if user_input.lower() == "clear":
+            history.clear()
+            console.print("[dim]Chat history cleared.[/dim]")
+            continue
+
+        history.append(ChatMessage(role="user", content=user_input))
+
+        console.print(f"\n[green]{model}:[/green] ", end="")
+
+        try:
+            async def _stream():
+                full = ""
+                if rag:
+                    stream_iter = await engine.chat_with_rag(
+                        model=model, messages=history,
+                        temperature=temperature, max_tokens=max_tokens, stream=True,
+                    )
+                else:
+                    stream_iter = engine.chat_stream(
+                        model=model, messages=history,
+                        temperature=temperature, max_tokens=max_tokens,
+                    )
+                async for token in stream_iter:
+                    print(token, end="", flush=True)
+                    full += token
+                print()
+                return full
+
+            response = asyncio.run(_stream())
+            history.append(ChatMessage(role="assistant", content=response))
+        except Exception as e:
+            console.print(f"\n[red]Error: {e}[/red]")
+            history.pop()  # Remove the failed user message
+
+        print()
+
+
 if __name__ == "__main__":
     app()
