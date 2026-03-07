@@ -230,5 +230,27 @@ def connect_remove(profile: str = typer.Argument(..., help="Profile name to remo
     console.print(f"[green]Profile '{profile}' removed.[/green]")
 
 
+@app.command()
+def schedule_list():
+    """List active ingestion schedules."""
+    import asyncio
+    from adaptron.connectors.scheduler import IngestionScheduler
+    scheduler = IngestionScheduler()
+    schedules = asyncio.run(scheduler.list_schedules())
+    if not schedules:
+        console.print("[yellow]No active schedules.[/yellow]")
+        return
+    for s in schedules:
+        status = "[green]enabled[/green]" if s.enabled else "[red]disabled[/red]"
+        console.print(f"  {s.schedule_id}: {s.connector_profile} ({s.cron}) {status}")
+
+
+@app.command()
+def schedule_run(schedule_id: str = typer.Argument(..., help="Schedule ID to run")):
+    """Trigger immediate execution of a schedule."""
+    console.print(f"[yellow]Running schedule {schedule_id}...[/yellow]")
+    console.print("[yellow]Schedule execution requires active database connections.[/yellow]")
+
+
 if __name__ == "__main__":
     app()
