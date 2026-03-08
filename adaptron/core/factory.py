@@ -101,6 +101,21 @@ class SynthesizeStage:
         return StageResult(status=StageStatus.COMPLETED, output={"dataset_size": len(dataset)})
 
 
+class ValidateStage:
+    """Validate stage — placeholder for post-training model validation."""
+    name = "validate"
+
+    def __init__(self, config: PipelineConfig):
+        self.config = config
+
+    async def run(self, context: dict) -> StageResult:
+        context["validation_pending"] = True
+        return StageResult(
+            status=StageStatus.COMPLETED,
+            output={"validation_pending": True, "message": "Run 'adaptron validate' after training"},
+        )
+
+
 class PipelineFactory:
     """Assembles pipeline stages from a PipelineConfig."""
 
@@ -113,5 +128,6 @@ class PipelineFactory:
         pipeline.add_stage("understand", UnderstandStage(config))
         pipeline.add_stage("clean", CleanStage(config))
         pipeline.add_stage("synthesize", SynthesizeStage(config))
+        pipeline.add_stage("validate", ValidateStage(config))
 
         return pipeline

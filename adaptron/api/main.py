@@ -36,6 +36,9 @@ def create_app() -> FastAPI:
     from adaptron.api.routes.research import router as research_router
     app.include_router(research_router)
 
+    from adaptron.api.routes.validate import router as validate_router
+    app.include_router(validate_router)
+
     @app.get("/api/health")
     def health():
         return {"status": "ok", "version": adaptron.__version__}

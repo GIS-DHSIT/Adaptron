@@ -54,9 +54,9 @@ class TestPipelineFactory:
 
         assert isinstance(pipeline, PipelineOrchestrator)
         # The orchestrator stores stages as a list of (name, stage) tuples
-        assert len(pipeline._stages) == 4
+        assert len(pipeline._stages) == 5
         names = [name for name, _ in pipeline._stages]
-        assert names == ["ingest", "understand", "clean", "synthesize"]
+        assert names == ["ingest", "understand", "clean", "synthesize", "validate"]
 
 
 class TestPipelineE2E:
@@ -118,8 +118,8 @@ class TestPipelineE2E:
         # Pipeline should complete without errors even with no data
         assert result.status == StageStatus.COMPLETED
 
-        # All four stages should have completed
-        assert len(result.stage_results) == 4
+        # All five stages should have completed
+        assert len(result.stage_results) == 5
         for name, sr in result.stage_results.items():
             assert sr.status == StageStatus.COMPLETED, f"Stage '{name}' did not complete"
 
@@ -143,8 +143,8 @@ class TestPipelineEvents:
         # Verify expected event types are present
         assert "pipeline_start" in event_types
         assert "pipeline_complete" in event_types
-        assert event_types.count("stage_start") == 4
-        assert event_types.count("stage_complete") == 4
+        assert event_types.count("stage_start") == 5
+        assert event_types.count("stage_complete") == 5
 
         # Verify ordering: pipeline_start first, pipeline_complete last
         assert event_types[0] == "pipeline_start"
@@ -157,6 +157,7 @@ class TestPipelineEvents:
             "stage_start", "stage_complete",   # understand
             "stage_start", "stage_complete",   # clean
             "stage_start", "stage_complete",   # synthesize
+            "stage_start", "stage_complete",   # validate
             "pipeline_complete",
         ]
         assert event_types == expected_order
@@ -164,4 +165,4 @@ class TestPipelineEvents:
         # Verify stage names in stage events
         stage_starts = [e for e in events_received if e.type == "stage_start"]
         stage_names = [e.data["stage"] for e in stage_starts]
-        assert stage_names == ["ingest", "understand", "clean", "synthesize"]
+        assert stage_names == ["ingest", "understand", "clean", "synthesize", "validate"]

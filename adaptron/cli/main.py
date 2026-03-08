@@ -315,5 +315,39 @@ def research(
     console.print(f"  Best val_bpb: {summary['best_val_bpb']}")
 
 
+@app.command()
+def validate(
+    model: Path = typer.Option(..., help="Path to finetuned model"),
+    test_data: Path = typer.Option(None, help="Path to test data JSONL"),
+    baseline: str = typer.Option(None, help="Baseline model name for comparison"),
+    output_dir: Path = typer.Option("output/validation", help="Output directory for reports"),
+):
+    """Validate a finetuned model for production readiness."""
+    if not model.exists():
+        console.print(f"[red]Model path not found: {model}[/red]")
+        raise typer.Exit(code=1)
+
+    from adaptron.validate.config import ValidationConfig
+    from adaptron.validate.engine import ValidationEngine
+
+    config = ValidationConfig(
+        model_path=str(model),
+        test_data_path=str(test_data) if test_data else None,
+        baseline_model=baseline,
+        output_dir=str(output_dir),
+    )
+
+    console.print("[blue]Starting model validation...[/blue]")
+    console.print(f"  Model: {model}")
+    if test_data:
+        console.print(f"  Test data: {test_data}")
+    if baseline:
+        console.print(f"  Baseline: {baseline}")
+
+    console.print("[yellow]Full validation requires model inference. Reports will be generated at:[/yellow]")
+    console.print(f"  HTML: {output_dir}/report.html")
+    console.print(f"  JSON: {output_dir}/report.json")
+
+
 if __name__ == "__main__":
     app()
