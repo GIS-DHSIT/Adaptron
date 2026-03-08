@@ -1,6 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { ArrowLeft, ArrowRight, Check, RotateCcw } from 'lucide-react'
 
 const QUESTIONS = [
   {
@@ -38,7 +43,7 @@ const QUESTIONS = [
     subtitle: 'VRAM determines which training modes and base models are feasible.',
     options: [
       { id: 'low', label: '\u2264 8GB VRAM', desc: 'RTX 3070/4060 or equivalent', icon: '\u{1F4BB}' },
-      { id: 'mid', label: '12-16GB VRAM', desc: 'RTX 3080/4080', icon: '\u{1F5A5}\uFE0F' },
+      { id: 'mid', label: '12\u201316GB VRAM', desc: 'RTX 3080/4080', icon: '\u{1F5A5}\uFE0F' },
       { id: 'high', label: '24GB+ VRAM', desc: 'RTX 4090 / A100', icon: '\u{1F680}' },
       { id: 'cloud', label: 'Cloud GPU Burst', desc: 'RunPod, Lambda Labs, or similar', icon: '\u2601\uFE0F' },
     ],
@@ -48,8 +53,8 @@ const QUESTIONS = [
     subtitle: 'Training duration varies significantly by mode and hardware.',
     options: [
       { id: 'fast', label: 'Under 2 Hours', desc: 'Need results quickly', icon: '\u23F1\uFE0F' },
-      { id: 'medium', label: '2-8 Hours', desc: 'Acceptable for overnight builds', icon: '\u{1F550}' },
-      { id: 'long', label: '8-24 Hours', desc: 'Can run extended training', icon: '\u{1F4C6}' },
+      { id: 'medium', label: '2\u20138 Hours', desc: 'Acceptable for overnight builds', icon: '\u{1F550}' },
+      { id: 'long', label: '8\u201324 Hours', desc: 'Can run extended training', icon: '\u{1F4C6}' },
       { id: 'unlimited', label: 'No Constraint', desc: 'Quality is the priority', icon: '\u267E\uFE0F' },
     ],
   },
@@ -57,8 +62,8 @@ const QUESTIONS = [
     id: 'accuracy', title: 'What accuracy level do your users require?',
     subtitle: 'Higher accuracy requirements demand more sophisticated strategies.',
     options: [
-      { id: 'exploratory', label: 'Exploratory / Prototype', desc: '70-80% accuracy is fine', icon: '\u{1F9EA}' },
-      { id: 'professional', label: 'Professional Grade', desc: '80-90% accuracy', icon: '\u{1F4BC}' },
+      { id: 'exploratory', label: 'Exploratory / Prototype', desc: '70\u201380% accuracy is fine', icon: '\u{1F9EA}' },
+      { id: 'professional', label: 'Professional Grade', desc: '80\u201390% accuracy', icon: '\u{1F4BC}' },
       { id: 'enterprise', label: 'Enterprise Production', desc: '90%+ accuracy', icon: '\u{1F3E2}' },
       { id: 'mission', label: 'Mission Critical', desc: 'Near-perfect accuracy required', icon: '\u{1F396}\uFE0F' },
     ],
@@ -67,9 +72,9 @@ const QUESTIONS = [
     id: 'model_size', title: 'What is your target model size?',
     subtitle: 'Smaller models are faster and cheaper but have lower reasoning ceilings.',
     options: [
-      { id: 'tiny', label: 'Tiny (1-3B)', desc: 'Fastest inference, basic tasks', icon: '\u{1F43E}' },
-      { id: 'small', label: 'Small (3-7B)', desc: 'Best quality/speed balance', icon: '\u2696\uFE0F' },
-      { id: 'medium', label: 'Medium (7-13B)', desc: 'Strong reasoning, more VRAM', icon: '\u{1F4AA}' },
+      { id: 'tiny', label: 'Tiny (1\u20133B)', desc: 'Fastest inference, basic tasks', icon: '\u{1F43E}' },
+      { id: 'small', label: 'Small (3\u20137B)', desc: 'Best quality/speed balance', icon: '\u2696\uFE0F' },
+      { id: 'medium', label: 'Medium (7\u201313B)', desc: 'Strong reasoning, more VRAM', icon: '\u{1F4AA}' },
       { id: 'large', label: 'Large (13B+)', desc: 'Near-frontier quality locally', icon: '\u{1F9BE}' },
     ],
   },
@@ -115,24 +120,11 @@ export default function WizardPage() {
         const resp = await fetch('/api/wizard/recommend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            primary_goal: answers.primary_goal,
-            data_sources: answers.data_sources || [],
-            data_freshness: answers.data_freshness,
-            hardware: answers.hardware,
-            timeline: answers.timeline,
-            accuracy: answers.accuracy,
-            model_size: answers.model_size,
-          }),
+          body: JSON.stringify(answers),
         })
-        const data = await resp.json()
-        setResult(data)
+        setResult(await resp.json())
       } catch {
-        setResult({
-          training_modes: ['qlora'],
-          base_model: 'Qwen/Qwen2.5-7B-Instruct',
-          deploy_targets: ['gguf', 'ollama'],
-        })
+        setResult({ training_modes: ['qlora'], base_model: 'Qwen/Qwen2.5-7B-Instruct', deploy_targets: ['gguf', 'ollama'] })
       }
       setLoading(false)
     }
@@ -140,75 +132,89 @@ export default function WizardPage() {
 
   if (result) {
     return (
-      <div className="max-w-3xl mx-auto p-8">
-        <div className="text-accent text-xs uppercase tracking-widest mb-2">Analysis Complete</div>
-        <h1 className="text-3xl font-bold mb-2">Recommended Strategy</h1>
-        <p className="text-gray-400 mb-8">Based on your {Object.keys(answers).length} selections.</p>
+      <div className="max-w-3xl mx-auto px-4 py-12">
+        <Badge variant="outline" className="bg-success/10 text-success border-success/30 mb-4">Analysis Complete</Badge>
+        <h1 className="text-3xl font-bold mb-1">Recommended Strategy</h1>
+        <p className="text-muted-foreground mb-8">Based on your {Object.keys(answers).length} selections.</p>
 
-        <div className="bg-surface border border-border rounded-xl p-6 mb-4">
-          <h2 className="text-xs text-gray-400 uppercase tracking-wider mb-4">Training Modes</h2>
-          <div className="flex gap-3 flex-wrap">
-            {result.training_modes.map(mode => (
-              <span key={mode} className="px-4 py-2 bg-accent/10 border border-accent/30 rounded-lg text-accent font-bold uppercase text-sm">
-                {mode}
-              </span>
-            ))}
-          </div>
+        <div className="space-y-4">
+          <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">Training Modes</p>
+              <div className="flex gap-2 flex-wrap">
+                {result.training_modes.map(mode => (
+                  <Badge key={mode} className="bg-primary/10 text-primary border-primary/30 text-sm px-3 py-1">{mode}</Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Base Model</p>
+              <p className="text-xl font-bold text-primary">{result.base_model}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">Deploy Targets</p>
+              <div className="flex gap-2">
+                {result.deploy_targets.map(t => (
+                  <Badge key={t} className="bg-success/10 text-success border-success/30 text-sm px-3 py-1">{t}</Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="bg-surface border border-border rounded-xl p-6 mb-4">
-          <h2 className="text-xs text-gray-400 uppercase tracking-wider mb-2">Base Model</h2>
-          <p className="text-accent text-lg font-bold">{result.base_model}</p>
-        </div>
-
-        <div className="bg-surface border border-border rounded-xl p-6 mb-4">
-          <h2 className="text-xs text-gray-400 uppercase tracking-wider mb-4">Deploy Targets</h2>
-          <div className="flex gap-3">
-            {result.deploy_targets.map(t => (
-              <span key={t} className="px-4 py-2 bg-green/10 border border-green/30 rounded-lg text-green font-bold uppercase text-sm">
-                {t}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <button onClick={() => { setResult(null); setStep(0); setAnswers({}) }} className="mt-4 px-6 py-3 bg-green text-black rounded-lg font-bold uppercase text-sm">
-          New Analysis &rarr;
-        </button>
+        <Button onClick={() => { setResult(null); setStep(0); setAnswers({}) }} className="mt-6">
+          <RotateCcw className="mr-2 h-4 w-4" /> New Analysis
+        </Button>
       </div>
     )
   }
 
+  const progress = ((step + 1) / QUESTIONS.length) * 100
+
   return (
-    <div className="max-w-3xl mx-auto p-8">
+    <div className="max-w-3xl mx-auto px-4 py-12">
       {/* Progress */}
-      <div className="flex gap-1.5 mb-12">
-        {QUESTIONS.map((_, i) => (
-          <div key={i} className={`h-1 flex-1 rounded ${i < step ? 'bg-accent' : i === step ? 'bg-accent/40' : 'bg-border'}`} />
-        ))}
+      <div className="mb-10">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs text-muted-foreground">Step {step + 1} of {QUESTIONS.length}</span>
+          <span className="text-xs text-muted-foreground">{Math.round(progress)}%</span>
+        </div>
+        <Progress value={progress} className="h-1.5" />
       </div>
 
       {/* Question */}
-      <div className="text-xs text-gray-400 uppercase tracking-widest mb-2">
-        Question {step + 1} of {QUESTIONS.length}
-      </div>
-      <h1 className="text-2xl font-bold mb-2">{q.title}</h1>
-      <p className="text-sm text-gray-400 mb-6">{q.subtitle}</p>
-      {isMulti && <div className="text-xs text-gray-500 border border-border rounded px-3 py-1 inline-block mb-4 uppercase">Select all that apply</div>}
+      <h1 className="text-2xl font-bold mb-1">{q.title}</h1>
+      <p className="text-sm text-muted-foreground mb-6">{q.subtitle}</p>
+      {isMulti && (
+        <Badge variant="outline" className="mb-4 text-xs border-white/10">Select all that apply</Badge>
+      )}
 
       {/* Options */}
-      <div className="grid grid-cols-2 gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
         {q.options.map(opt => (
           <button
             key={opt.id}
             onClick={() => handleSelect(opt.id)}
-            className={`text-left p-4 rounded-xl border transition-all ${isSelected(opt.id) ? 'bg-accent/10 border-accent shadow-lg shadow-accent/10' : 'bg-surface border-border hover:bg-surface-hover hover:border-border-active'}`}
+            className={`text-left p-4 rounded-xl border transition-all duration-200 ${
+              isSelected(opt.id)
+                ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/10'
+                : 'bg-white/5 border-white/10 hover:bg-white/[0.08] hover:border-white/20 hover:-translate-y-0.5'
+            }`}
           >
-            <div className="flex gap-3">
-              <span className="text-xl">{opt.icon}</span>
-              <div>
-                <div className={`text-xs font-bold uppercase tracking-wide ${isSelected(opt.id) ? 'text-accent' : 'text-gray-400'}`}>{opt.label}</div>
-                <div className="text-xs text-gray-500 mt-1">{opt.desc}</div>
+            <div className="flex items-start gap-3">
+              <span className="text-xl mt-0.5">{opt.icon}</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-semibold ${isSelected(opt.id) ? 'text-primary' : 'text-foreground'}`}>{opt.label}</span>
+                  {isSelected(opt.id) && <Check className="h-3.5 w-3.5 text-primary" />}
+                </div>
+                <span className="text-xs text-muted-foreground mt-0.5 block">{opt.desc}</span>
               </div>
             </div>
           </button>
@@ -217,20 +223,13 @@ export default function WizardPage() {
 
       {/* Navigation */}
       <div className="flex justify-between items-center">
-        <button
-          onClick={() => setStep(Math.max(0, step - 1))}
-          disabled={step === 0}
-          className="px-5 py-2 border border-border text-gray-400 rounded-lg text-sm uppercase disabled:opacity-30"
-        >
-          &larr; Back
-        </button>
-        <button
-          onClick={handleNext}
-          disabled={!isAnswered || loading}
-          className="px-5 py-2 bg-accent text-white rounded-lg font-bold text-sm uppercase disabled:bg-border disabled:text-gray-600 shadow-lg shadow-accent/20"
-        >
-          {loading ? 'Analyzing...' : step === QUESTIONS.length - 1 ? 'Analyze \u2192' : 'Next \u2192'}
-        </button>
+        <Button variant="ghost" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back
+        </Button>
+        <Button onClick={handleNext} disabled={!isAnswered || loading}>
+          {loading ? 'Analyzing...' : step === QUESTIONS.length - 1 ? 'Analyze' : 'Next'}
+          {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
+        </Button>
       </div>
     </div>
   )
