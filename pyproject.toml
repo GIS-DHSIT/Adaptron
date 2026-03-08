@@ -4,13 +4,16 @@ build-backend = "hatchling.build"
 
 [project]
 name = "adaptron"
-version = "0.1.0"
+version = "0.2.0"
 description = "End-to-end LLM Fine-tuning Framework"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [
     { name = "Muthu Subramanian G" },
+]
+maintainers = [
+    { name = "DHS IT Solutions" },
 ]
 keywords = ["llm", "fine-tuning", "machine-learning", "training", "nlp", "transformers"]
 classifiers = [
@@ -86,9 +89,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/MuthuSubramanian/Adaptron"
-Repository = "https://github.com/MuthuSubramanian/Adaptron"
-"Bug Tracker" = "https://github.com/MuthuSubramanian/Adaptron/issues"
+Homepage = "https://dhsitsolutions.com"
+Repository = "https://github.com/GIS-DHSIT/Adaptron"
+"Bug Tracker" = "https://github.com/GIS-DHSIT/Adaptron/issues"
+"Developer" = "https://github.com/msg-dhsit"
 
 [project.scripts]
 adaptron = "adaptron.cli.main:app"
