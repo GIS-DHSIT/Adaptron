@@ -49,6 +49,10 @@ class BenchmarkSuite:
         """Compute token-level F1 using Counter intersection."""
         pred_tokens = Counter(prediction.lower().split())
         ref_tokens = Counter(reference.lower().split())
+        if not pred_tokens and not ref_tokens:
+            return 1.0
+        if not pred_tokens or not ref_tokens:
+            return 0.0
         common = sum((pred_tokens & ref_tokens).values())
         if common == 0:
             return 0.0
@@ -129,11 +133,9 @@ class BenchmarkSuite:
                 return "D"
             return "F"
 
+        # Worst grade wins
         grade_order = {"A": 4, "B": 3, "C": 2, "D": 1, "F": 0}
-        reverse_order = {v: k for k, v in grade_order.items()}
-        avg_score = sum(grade_order.get(s, 0) for s in scores) / len(scores)
-        rounded = round(avg_score)
-        return reverse_order.get(rounded, "C")
+        return min(scores, key=lambda g: grade_order.get(g, 0))
 
     def run(
         self,

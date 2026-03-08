@@ -108,6 +108,22 @@ class HallucinationDetector:
 
         if has_consistency:
             consistency = self.compute_self_consistency(responses_per_prompt)  # type: ignore[arg-type]
+            # Flag prompts with low consistency (divergent responses)
+            for i, responses in enumerate(responses_per_prompt):  # type: ignore[arg-type]
+                if len(responses) < 2:
+                    continue
+                pair_scores = []
+                for a in range(len(responses)):
+                    for b in range(a + 1, len(responses)):
+                        pair_scores.append(self._token_overlap(responses[a], responses[b]))
+                avg_sim = sum(pair_scores) / len(pair_scores) if pair_scores else 1.0
+                if avg_sim < 0.7:
+                    flagged.append({
+                        "index": i,
+                        "type": "self_consistency",
+                        "responses": responses,
+                        "avg_similarity": round(avg_sim, 4),
+                    })
 
         return HallucinationResult(
             mode=mode,
